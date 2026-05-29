@@ -63,7 +63,7 @@ func ReadWrite(file string, dest string) {
 			}
 			fmt.Printf("\n")
 		}
-		fmt.Println("\n")
+		fmt.Printf("\n")
 		
 		fmt.Println("Bytes read:", n)
 	} else {
@@ -106,7 +106,11 @@ func main() {
 			dest = os.Args[i + 1]
 			i++
 		default:
-			file = arg
+			if file == "" {
+				file = arg
+			} else {
+				fmt.Println("\033[31m!!\033[0m \033[33mUnknown argument '" + arg + "'\033[0m \033[31m!!\033[0m")
+			}
 		}
 	}
 
