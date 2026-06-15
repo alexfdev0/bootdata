@@ -8,6 +8,8 @@ import (
 )
 
 var data [512]byte
+var seek int
+var x = make([]byte, 512)
 
 func ReadWrite(file string, dest string) {
 	f, err := os.OpenFile(file, os.O_RDONLY, 0)
@@ -17,7 +19,7 @@ func ReadWrite(file string, dest string) {
 	}
 	defer f.Close()
 	
-	n, err := f.ReadAt(data[0:512], 0)
+	n, err := f.ReadAt(data[0:512], int64(0 + seek))
 	if err != nil {
 		if err.Error() != "EOF" {
 			fmt.Println("bootdata: could not read '" + file + "'", err)
@@ -56,7 +58,7 @@ func ReadWrite(file string, dest string) {
 			for j := 0; j < 32; j++ {
 				current := (i * 0x20) + j
 				if unicode.IsPrint(rune(data[current])) && rune(data[current]) != 0x0A && rune(data[current]) != 0x0D {
-					fmt.Printf(string(rune(data[current])))
+					fmt.Printf("%s", string(rune(data[current])))	
 				} else {
 					fmt.Printf("\033[31m.\033[0m")
 				}	
@@ -74,7 +76,7 @@ func ReadWrite(file string, dest string) {
 		}
 		defer _f.Close()
 
-		_n, err := _f.WriteAt(data[0:512], int64(0))
+		_n, err := _f.WriteAt(data[0:512], int64(0 + seek))
 		if err != nil {
 			if err.Error() != "EOF" {
 				fmt.Println("bootdata: could not write to '" + dest + "'", err)
@@ -88,7 +90,7 @@ func ReadWrite(file string, dest string) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: bootdata <file/disk> [-w <file/disk>]")
+		fmt.Println("Usage: bootdata <file/disk> [-w <file/disk>] [-s (number of sectors to seek)]")
 		os.Exit(1)
 	}
 
@@ -100,11 +102,20 @@ func main() {
 		switch arg {
 		case "-w":
 			if len(os.Args) < i + 2 {
-				fmt.Println("Usage: bootdata <file/disk> [-w <file/disk>]")
+				fmt.Println("Usage: bootdata <file/disk> [-w <file/disk>] [-s (number of sectors to seek)]")
 				os.Exit(1)
 			}
 			dest = os.Args[i + 1]
 			i++
+		case "-s":
+			i++
+			_seek, err := strconv.ParseInt(os.Args[i], 0, 64)
+			if err != nil {
+				fmt.Println("Usage: bootdata <file/disk> [-w <file/disk>] [-s (number of sectors to seek)]")
+				os.Exit(1)
+			}
+			seek = int(_seek)
+			seek *= 512
 		default:
 			if file == "" {
 				file = arg
@@ -115,7 +126,7 @@ func main() {
 	}
 
 	if file == "" {
-		fmt.Println("Usage: bootdata <file/disk> [-w <file/disk>]")
+		fmt.Println("Usage: bootdata <file/disk> [-w <file/disk>] [-s (number of sectors to seek)]")
 		os.Exit(1)
 	}	
 	
